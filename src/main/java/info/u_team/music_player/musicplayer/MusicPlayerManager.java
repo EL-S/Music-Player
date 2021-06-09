@@ -8,26 +8,35 @@ import info.u_team.music_player.dependency.DependencyManager;
 import info.u_team.music_player.lavaplayer.api.IMusicPlayer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
+import info.u_team.music_player.config.ClientConfig;
+
 public class MusicPlayerManager {
-	
+
 	private static final Logger logger = LogManager.getLogger();
-	
+
 	private static IMusicPlayer player;
-	
+
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-	
+
 	private static final PlaylistManager playlistManager = new PlaylistManager(gson);
 	private static final SettingsManager settingsManager = new SettingsManager(gson);
-	
+
 	public static void setup() {
 		generatePlayer();
 		player.startAudioOutput();
 		playlistManager.loadFromFile();
 		settingsManager.loadFromFile();
-		
-		player.setVolume(settingsManager.getSettings().getVolume());
+
+		player.setVolume(this.player.getSettings().getVolume());
+
+		// If autoStart is enabled in the config, auto start the music as setup is complete
+		if (ClientConfig.client.autoStart) {
+			if (this.player.getTrackManager().getCurrentTrack() != null) {
+		    this.player.getTrackManager().setPaused(!this.player.getTrackManager().isPaused());
+		  }
+		}
 	}
-	
+
 	private static void generatePlayer() {
 		try {
 			Class<?> clazz = Class.forName("info.u_team.music_player.lavaplayer.MusicPlayer", true, DependencyManager.getClassLoader());
@@ -41,15 +50,15 @@ public class MusicPlayerManager {
 			FMLCommonHandler.instance().exitJava(0, false);
 		}
 	}
-	
+
 	public static IMusicPlayer getPlayer() {
 		return player;
 	}
-	
+
 	public static PlaylistManager getPlaylistManager() {
 		return playlistManager;
 	}
-	
+
 	public static SettingsManager getSettingsManager() {
 		return settingsManager;
 	}
